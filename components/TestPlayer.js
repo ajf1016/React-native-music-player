@@ -2,20 +2,35 @@ import {View, Text, TouchableOpacity, StyleSheet} from 'react-native';
 import TrackPlayer from 'react-native-track-player';
 import React, {useEffect} from 'react';
 
-// const tracks = [
-//   {
-//     id: 1,
-//     url: require('../assets/songs/outside.mp3'),
-//     title: 'Outside',
-//   },
-// ];
 const tracks = [
   {
     id: 1,
-    url: 'http://cast.uncuartocomunicacion.com:8020/live',
+    url: require('../assets/songs/outside.mp3'),
     title: 'Outside',
   },
+  {
+    id: 2,
+    url: require('../assets/songs/let-me-down.mp3'),
+    title: 'Let me down',
+  },
+  {
+    id: 3,
+    url: require('../assets/songs/butter.mp3'),
+    title: 'Butter',
+  },
+  {
+    id: 4,
+    url: require('../assets/songs/brooklyn.mp3'),
+    title: 'Brooklyn',
+  },
 ];
+// const tracks = [
+//   {
+//     id: 1,
+//     url: 'http://cast.uncuartocomunicacion.com:8020/live',
+//     title: 'Outside',
+//   },
+// ];
 
 TrackPlayer.updateOptions({
   stopWithApp: false,

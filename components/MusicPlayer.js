@@ -20,39 +20,64 @@ import TrackPlayer, {
   usePlaybackState,
   onProgress,
   useTrackPlayerEvents,
+  useProgress,
 } from 'react-native-track-player';
 import {songs} from '../model/data';
 const {width, height} = Dimensions.get('window');
 
 const playerSetUp = async () => {
-  await TrackPlayer.setupPlayer();
-  console.log('setuped');
-  await TrackPlayer.add(songs);
+  try {
+    await TrackPlayer.setupPlayer();
+    await TrackPlayer.add(songs);
+  } catch (error) {
+    console.log('ERROR', error);
+  }
 };
 
 const togglePlayPause = async playbackState => {
-    const currentTrack = await TrackPlayer.getCurrentTrack();
-    console.log(currentTrack, 'CURR');
-    if (currentTrack !== null) {
-
-      console.log(State);
-      if (playbackState == State.Paused) {
-        await TrackPlayer.play();
-      } else {
-        await TrackPlayer.pause();
-      }
+  const currentTrack = await TrackPlayer.getCurrentTrack();
+  if (currentTrack !== null) {
+    if (playbackState == State.Paused || playbackState == 1) {
+      await TrackPlayer.play();
+    } else {
+      await TrackPlayer.pause();
     }
+  }
 };
 
 export default function MusicPlayer() {
   const playbackState = usePlaybackState();
+  const progress = useProgress();
   const scrollX = useRef(new Animated.Value(0)).current;
   const songSlider = useRef(null);
   const [songIndex, setSongIndex] = useState(0);
+  const [trackArtwork, setTrackArtwork] = useState();
+  const [trackArtist, setTrackArtist] = useState();
+  const [trackTitle, setTrackTitle] = useState();
+
+  // changing the track when the song end
+  useTrackPlayerEvents([Event.PlaybackTrackChanged], async event => {
+    if (event.type === Event.PlaybackTrackChanged && event.nextTrack !== null) {
+      const track = await TrackPlayer.getTrack(event.nextTrack);
+      const {title, artwork, image, artist} = track;
+      setTrackArtwork(artwork);
+      setTrackArtist(artist);
+      setTrackTitle(title);
+      if (playbackState == State.Paused || playbackState == 1 || 6) {
+        await TrackPlayer.play();
+      }
+    }
+  });
+
+  const skipTo = async trackId => {
+    await TrackPlayer.skip(trackId);
+  };
+
   useEffect(() => {
     playerSetUp();
     scrollX.addListener(({value}) => {
       const index = Math.round(value / width);
+      skipTo(index);
       setSongIndex(index);
     });
 
@@ -81,7 +106,14 @@ export default function MusicPlayer() {
           justifyContent: 'center',
         }}>
         <View style={styles.artworkWrapper}>
-          <Image source={item.image} style={styles.artwork} />
+          <Image
+            source={
+              trackArtwork
+                ? trackArtwork
+                : require('../assets/images/default.png')
+            }
+            style={styles.artwork}
+          />
         </View>
       </Animated.View>
     );
@@ -113,37 +145,55 @@ export default function MusicPlayer() {
           />
         </View>
         <View>
-          <Text style={styles.title}>{songs[songIndex].title}</Text>
-          <Text style={styles.artist}>{songs[songIndex].artist}</Text>
+          <Text style={styles.title}>{trackTitle}</Text>
+          <Text style={styles.artist}>{trackArtist}</Text>
         </View>
         <View>
           <Slider
             style={styles.progressContainer}
-            value={10}
+            value={progress.position}
             minimumValue={0}
-            maximumValue={100}
-            thumbTintColor="#D61C4E"
-            minimumTrackTintColor="#D61C4E"
+            maximumValue={progress.duration}
+            thumbTintColor="#1DB954"
+            minimumTrackTintColor="#1DB954"
             maximumTrackTintColor="#fff"
-            onSlidingComplete={() => {}}
+            onSlidingComplete={async value => {
+              await TrackPlayer.seekTo(value);
+            }}
           />
         </View>
         <View style={styles.progressLbaelContainer}>
-          <Text style={styles.progressLabelText}>0:00</Text>
-          <Text style={styles.progressLabelText}>0:00</Text>
+          <Text style={styles.progressLabelText}>
+            {new Date(progress.position * 1000)
+              .toLocaleTimeString()
+              .substring(4)}
+          </Text>
+          <Text style={styles.progressLabelText}>
+            {new Date((progress.duration - progress.position) * 1000)
+              .toLocaleTimeString()
+              .substring(4)}
+          </Text>
         </View>
         <View style={styles.playerControls}>
           <TouchableOpacity onPress={skipToPrevious}>
-            <Ionicons name="play-skip-back-outline" size={30} color="#D61C4E" />
+            <Ionicons name="play-skip-back-outline" size={30} color="#1DB954" />
           </TouchableOpacity>
           <TouchableOpacity onPress={() => togglePlayPause(playbackState)}>
-            <Ionicons name="ios-play-circle" size={48} color="#D61C4E" />
+            <Ionicons
+              name={
+                playbackState === State.Playing
+                  ? 'ios-pause-circle'
+                  : 'ios-play-circle'
+              }
+              size={48}
+              color="#1DB954"
+            />
           </TouchableOpacity>
           <TouchableOpacity onPress={skipToNext}>
             <Ionicons
               name="play-skip-forward-outline"
               size={30}
-              color="#D61C4E"
+              color="#1DB954"
             />
           </TouchableOpacity>
         </View>
@@ -151,16 +201,16 @@ export default function MusicPlayer() {
       <View style={styles.bottomContainer}>
         <View style={styles.bottomControls}>
           <TouchableOpacity onPress={() => {}}>
-            <Ionicons name="heart-outline" size={30} color="#D61C4E" />
+            <Ionicons name="heart-outline" size={30} color="#1DB954" />
           </TouchableOpacity>
           <TouchableOpacity onPress={() => {}}>
-            <Ionicons name="repeat" size={30} color="#D61C4E" />
+            <Ionicons name="repeat" size={30} color="#1DB954" />
           </TouchableOpacity>
           <TouchableOpacity onPress={() => {}}>
-            <Ionicons name="share-outline" size={30} color="#D61C4E" />
+            <Ionicons name="share-outline" size={30} color="#1DB954" />
           </TouchableOpacity>
           <TouchableOpacity onPress={() => {}}>
-            <Ionicons name="ellipsis-horizontal" size={30} color="#D61C4E" />
+            <Ionicons name="ellipsis-horizontal" size={30} color="#1DB954" />
           </TouchableOpacity>
         </View>
       </View>
@@ -201,6 +251,7 @@ const styles = StyleSheet.create({
   artwork: {
     height: '100%',
     width: '100%',
+    backgroundColor: '#fff',
   },
   title: {
     fontSize: 18,

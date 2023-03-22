@@ -5,7 +5,7 @@ import TestPlayer from './components/TestPlayer';
 import Test from './components/Test';
 
 export default function App() {
-  // return <MusicPlayer />;
+  return <MusicPlayer />;
   // return <TestPlayer />;
-  return <Test />;
+  // return <Test />;
 }
