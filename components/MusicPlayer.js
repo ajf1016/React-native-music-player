@@ -5,26 +5,29 @@ import {
   StyleSheet,
   Dimensions,
   TouchableOpacity,
-  FlatList,
   Image,
   Animated,
 } from 'react-native';
 import React, {useEffect, useRef, useState} from 'react';
+
+// packages
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import Slider from '@react-native-community/slider';
 import TrackPlayer, {
-  Capability,
   Event,
-  RepeatMode,
   State,
   usePlaybackState,
-  onProgress,
   useTrackPlayerEvents,
   useProgress,
 } from 'react-native-track-player';
-import {songs} from '../model/data';
-const {width, height} = Dimensions.get('window');
 
+// constants
+import {songs} from '../model/data';
+
+// states
+const {width} = Dimensions.get('window');
+
+// initial player setup
 const playerSetUp = async () => {
   try {
     await TrackPlayer.setupPlayer();
@@ -34,6 +37,7 @@ const playerSetUp = async () => {
   }
 };
 
+// when click play-pause button
 const togglePlayPause = async playbackState => {
   const currentTrack = await TrackPlayer.getCurrentTrack();
   if (currentTrack !== null) {
@@ -55,26 +59,32 @@ export default function MusicPlayer() {
   const [trackArtist, setTrackArtist] = useState();
   const [trackTitle, setTrackTitle] = useState();
 
-  // changing the track when the song end
+  // changing the track when the song end automaticaly
   useTrackPlayerEvents([Event.PlaybackTrackChanged], async event => {
+    // automatic song changing when track end
     if (event.type === Event.PlaybackTrackChanged && event.nextTrack !== null) {
       const track = await TrackPlayer.getTrack(event.nextTrack);
-      const {title, artwork, image, artist} = track;
+      const {title, artwork, artist} = track;
       setTrackArtwork(artwork);
       setTrackArtist(artist);
       setTrackTitle(title);
+
+      // autoplay
       if (playbackState == State.Paused || playbackState == 1 || 6) {
         await TrackPlayer.play();
       }
     }
   });
 
+  // song index for which index we want ,when we click prev/next button
   const skipTo = async trackId => {
     await TrackPlayer.skip(trackId);
   };
 
   useEffect(() => {
     playerSetUp();
+
+    // get the index value
     scrollX.addListener(({value}) => {
       const index = Math.round(value / width);
       skipTo(index);
@@ -86,11 +96,14 @@ export default function MusicPlayer() {
     };
   }, []);
 
+  // when click prev
   const skipToPrevious = () => {
     songSlider.current.scrollToOffset({
       offset: (songIndex - 1) * width,
     });
   };
+
+  // when click next
   const skipToNext = () => {
     songSlider.current.scrollToOffset({
       offset: (songIndex + 1) * width,
