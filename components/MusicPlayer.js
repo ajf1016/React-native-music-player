@@ -12,10 +12,13 @@ import React, {useEffect, useRef, useState} from 'react';
 
 // packages
 import Ionicons from 'react-native-vector-icons/Ionicons';
+import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import Slider from '@react-native-community/slider';
 import TrackPlayer, {
   Event,
+  Capability,
   State,
+  RepeatMode,
   usePlaybackState,
   useTrackPlayerEvents,
   useProgress,
@@ -31,6 +34,16 @@ const {width} = Dimensions.get('window');
 const playerSetUp = async () => {
   try {
     await TrackPlayer.setupPlayer();
+    await TrackPlayer.updateOptions({
+      capabilities: [
+        Capability.Play,
+        Capability.Pause,
+        Capability.SkipToNext,  
+        Capability.SkipToPrevious,
+        Capability.Stop,
+      ],
+      
+    });
     await TrackPlayer.add(songs);
   } catch (error) {
     console.log('ERROR', error);
@@ -55,6 +68,7 @@ export default function MusicPlayer() {
   const scrollX = useRef(new Animated.Value(0)).current;
   const songSlider = useRef(null);
   const [songIndex, setSongIndex] = useState(0);
+  const [repeatMode, setRepeatMode] = useState('off');
   const [trackArtwork, setTrackArtwork] = useState();
   const [trackArtist, setTrackArtist] = useState();
   const [trackTitle, setTrackTitle] = useState();
@@ -93,6 +107,7 @@ export default function MusicPlayer() {
 
     return () => {
       scrollX.removeAllListeners();
+      TrackPlayer.destroy();
     };
   }, []);
 
@@ -108,6 +123,34 @@ export default function MusicPlayer() {
     songSlider.current.scrollToOffset({
       offset: (songIndex + 1) * width,
     });
+  };
+
+  // handle repeat
+  const repeatIcon = () => {
+    if (repeatMode == 'off') {
+      return 'repeat-off';
+    }
+    if (repeatMode == 'track') {
+      return 'repeat-once';
+    }
+    if (repeatMode == 'repeat') {
+      return 'repeat';
+    }
+  };
+
+  const changeRepeatMode = () => {
+    if (repeatMode == 'off') {
+      TrackPlayer.setRepeatMode(RepeatMode.Track);
+      setRepeatMode('track');
+    }
+    if (repeatMode == 'track') {
+      TrackPlayer.setRepeatMode(RepeatMode.Queue);
+      setRepeatMode('repeat');
+    }
+    if (repeatMode == 'repeat') {
+      TrackPlayer.setRepeatMode(RepeatMode.Off);
+      setRepeatMode('off');
+    }
   };
 
   const renderSongs = ({index, item}) => {
@@ -216,8 +259,12 @@ export default function MusicPlayer() {
           <TouchableOpacity onPress={() => {}}>
             <Ionicons name="heart-outline" size={30} color="#1DB954" />
           </TouchableOpacity>
-          <TouchableOpacity onPress={() => {}}>
-            <Ionicons name="repeat" size={30} color="#1DB954" />
+          <TouchableOpacity onPress={changeRepeatMode}>
+            <MaterialCommunityIcons
+              name={`${repeatIcon()}`}
+              size={30}
+              color={repeatMode !== 'off' ? '#FFD369' : '#1DB954'}
+            />
           </TouchableOpacity>
           <TouchableOpacity onPress={() => {}}>
             <Ionicons name="share-outline" size={30} color="#1DB954" />
